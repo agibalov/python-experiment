@@ -1,0 +1,31 @@
+openapi: 3.0.0
+
+info:
+  title: Hello World
+  version: '1.0'
+
+paths:
+  /add_numbers:
+    get:
+      operationId: request_validation_test.add_numbers
+      parameters:
+        - name: a
+          in: query
+          schema:
+            type: number
+          required: true
+        - name: b
+          in: query
+          schema:
+            type: number
+          required: true
+      responses:
+        '200':
+          description: A result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sum:
+                    type: number
