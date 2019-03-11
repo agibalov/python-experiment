@@ -21,11 +21,34 @@ paths:
           required: true
       responses:
         '200':
-          description: A result.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  sum:
-                    type: number
+          $ref: '#/components/responses/AddNumbersResultResponse'
+
+  /add_numbers_json:
+    post:
+      operationId: request_validation_test.add_numbers_json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                a:
+                  type: number
+                b:
+                  type: number
+      responses:
+        '200':
+          $ref: '#/components/responses/AddNumbersResultResponse'
+
+components:
+  responses:
+    AddNumbersResultResponse:
+      description: A result.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              sum:
+                type: number
