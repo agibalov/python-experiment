@@ -15,8 +15,17 @@ def add_numbers_json(body):
     }
 
 
+def get_user(id: int):
+    return {
+        'id': id,
+        'name': 'User #{}'.format(id)
+    }
+
+
 app = connexion.FlaskApp(__name__)
 app.add_api('request_validation_api.yaml')
+if __name__ == '__main__':
+    app.run(port=8080)
 
 
 @pytest.fixture
@@ -68,3 +77,17 @@ def test_add_numbers_json_responds_with_400_when_parameters_are_strings(client: 
         'title': 'Bad Request',
         'type': 'about:blank'
     }
+
+
+def test_get_user_responds_with_200_when_user_id_is_an_integer(client: flask.testing.FlaskClient):
+    response = client.get('/users/123')
+    assert response.status_code == 200
+    assert response.get_json() == {
+        'id': 123,
+        'name': 'User #123'
+    }
+
+
+def test_get_user_responds_with_404_when_user_id_is_a_string(client: flask.testing.FlaskClient):
+    response = client.get('/users/hello')
+    assert response.status_code == 404
