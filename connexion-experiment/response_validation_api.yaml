@@ -1,0 +1,28 @@
+openapi: 3.0.0
+
+info:
+  title: Hello World
+  version: '1.0'
+
+paths:
+  /message:
+    get:
+      operationId: response_validation_test.get_message
+      parameters:
+        - name: return_valid_response
+          in: query
+          schema:
+            type: boolean
+          required: true
+      responses:
+        '200':
+          description: Some message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
