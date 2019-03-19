@@ -8,6 +8,7 @@ pytest = "*"
 
 [packages]
 dependency-injector = "*"
+injector = "*"
 
 [requires]
 python_version = "3.7"
