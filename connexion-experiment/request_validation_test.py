@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
 
 @pytest.fixture
-def client()-> flask.testing.FlaskClient:
+def client() -> flask.testing.FlaskClient:
     yield app.app.test_client()
 
 

@@ -4,7 +4,7 @@ import flask.testing
 
 
 @pytest.fixture
-def client()-> flask.testing.FlaskClient:
+def client() -> flask.testing.FlaskClient:
     flask_app = connexion_app.app
     yield flask_app.test_client()
 

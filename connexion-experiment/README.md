@@ -7,7 +7,7 @@ Run with `pipenv run python main.py`:
 
 ---
 
-Run with `pipenv run python request_validation_test.py`:
+Run with `pipenv run python *_test.py`:
 
 * http://localhost:8080/ui should be Swagger UI
 

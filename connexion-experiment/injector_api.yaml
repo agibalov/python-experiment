@@ -1,0 +1,22 @@
+openapi: 3.0.0
+
+info:
+  title: Hello World
+  version: '1.0'
+
+paths:
+  /message:
+    get:
+      operationId: injector_test.get_message
+      responses:
+        '200':
+          description: Some message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message

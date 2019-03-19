@@ -9,6 +9,8 @@ pytest = "*"
 [packages]
 connexion = {extras = ["swagger-ui"],version = "*"}
 flask = "*"
+flask-injector = "*"
+injector = "*"
 
 [requires]
 python_version = "3.7"
