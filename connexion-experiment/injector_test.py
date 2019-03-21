@@ -4,27 +4,15 @@ import flask_injector
 import pytest
 from injector import Binder, Injector
 
-
-class MessageGenerator:
-    def __init__(self, message: str) -> None:
-        self._message = message
-
-    def make_message(self) -> str:
-        return self._message
-
-
-def configure_for_test(binder: Binder):
-    binder.bind(MessageGenerator, to=MessageGenerator(message='hi there test!'))
+from injector_test_handler import MessageGenerator
 
 
 def configure_for_prod(binder: Binder):
     binder.bind(MessageGenerator, to=MessageGenerator(message='hi there prod!'))
 
 
-def get_message(message_generator: MessageGenerator):
-    return {
-        'message': message_generator.make_message()
-    }
+def configure_for_test(binder: Binder):
+    binder.bind(MessageGenerator, to=MessageGenerator(message='hi there test!'))
 
 
 app = connexion.FlaskApp(__name__)
@@ -35,9 +23,7 @@ if __name__ == '__main__':
 else:
     modules = [configure_for_test]
 
-
 injector = Injector(modules)
-
 flask_injector.FlaskInjector(app=app.app, injector=injector)
 
 if __name__ == '__main__':
@@ -55,6 +41,3 @@ def test_get_message(client: flask.testing.FlaskClient):
     assert response.get_json() == {
         'message': 'hi there test!'
     }
-
-# pytest is ok
-# python injector_test.py seems to use its own empty injector for get_message()

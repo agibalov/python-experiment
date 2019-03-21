@@ -7,7 +7,7 @@ info:
 paths:
   /message:
     get:
-      operationId: injector_test.get_message
+      operationId: injector_test_handler.get_message
       responses:
         '200':
           description: Some message.
