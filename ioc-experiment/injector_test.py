@@ -1,4 +1,6 @@
-from injector import Injector, inject, Module, Binder
+from abc import ABC
+
+from injector import Injector, inject, Module, Binder, singleton, MappingKey, Key
 
 
 class Greeter:
@@ -37,3 +39,18 @@ def test_dummy() -> None:
         greeting_suffix='!!!')])
     message_generator: MessageGenerator = injector.get(MessageGenerator)
     assert message_generator.make_message('Andrey') == 'Hi, Andrey!!! How are you?'
+
+
+def test_multibind() -> None:
+    class Handler(ABC): pass
+    class Handler1(Handler): pass
+    class Handler2(Handler): pass
+
+    def configure(binder: Binder) -> None:
+        binder.multibind(Handler, [Handler1()], scope=singleton)
+        binder.multibind(Handler, [Handler2()], scope=singleton)
+
+    injector = Injector([configure])
+    handlers = injector.get(Handler)
+    assert isinstance(handlers[0], Handler1)
+    assert isinstance(handlers[1], Handler2)
