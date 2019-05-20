@@ -1,7 +1,12 @@
+import threading
 from abc import ABC
+from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import cast
 
-from injector import Injector, inject, Module, Binder, singleton, MappingKey, Key, provider, SequenceKey
+import pytest
+from injector import Injector, inject, Module, Binder, singleton, Key, provider, SequenceKey, Scope, \
+    ScopeDecorator, UnsatisfiedRequirement, InstanceProvider
 
 
 class Greeter:
@@ -70,3 +75,89 @@ def test_multibind() -> None:
     assert isinstance(handlers[1], Handler2)
     assert isinstance(handlers[2], Handler3)
     assert handlers[2].something == 'hello'
+
+
+def test_custom_scope() -> None:
+    @dataclass
+    class Project:
+        name: str
+        special: bool
+
+    class ProjectScope(Scope):
+        def __init__(self, *args, **kwargs):
+            super(ProjectScope, self).__init__(*args, **kwargs)
+            self.context = None
+
+        @contextmanager
+        def __call__(self, project: Project):
+            if self.context is not None:
+                raise Exception('context is not None')
+            self.context = {}
+            binder = self.injector.get(Binder)
+            binder.bind(Project, to=project, scope=ProjectScope)
+            yield
+            self.context = None
+
+        def get(self, key, provider):
+            if self.context is None:
+                raise UnsatisfiedRequirement(None, key)
+
+            try:
+                return self.context[key]
+            except KeyError:
+                provider = InstanceProvider(provider.get(self.injector))
+                self.context[key] = provider
+                return provider
+
+    class Handler(ABC):
+        pass
+    class OrdinaryHandler(Handler):
+        def __init__(self, project: Project):
+            self.project = project
+    class SpecialHandler(Handler):
+        def __init__(self, project: Project):
+            self.project = project
+    class SomeSingletonService: pass
+
+    project_scope = ScopeDecorator(ProjectScope)
+
+    class ProjectScopedHandlerModule(Module):
+        @project_scope
+        @provider
+        def handler(self, project: Project) -> Handler:
+            if project.special:
+                return SpecialHandler(project)
+            else:
+                return OrdinaryHandler(project)
+
+        @singleton
+        @provider
+        def some_singleton_service(self, handler: Handler) -> SomeSingletonService:
+            return SomeSingletonService()
+
+    injector = Injector([ProjectScopedHandlerModule()], auto_bind=False)
+
+    scope = injector.get(ProjectScope)
+
+    with scope(Project(name='proj1', special=False)):
+        handler = injector.get(Handler)
+    assert isinstance(handler, OrdinaryHandler)
+    assert handler.project.name == 'proj1'
+
+    with scope(Project(name='proj2', special=True)):
+        handler = injector.get(Handler)
+    assert isinstance(handler, SpecialHandler)
+    assert handler.project.name == 'proj2'
+
+    with scope(Project(name='proj3', special=True)):
+        @inject
+        def f(handler: Handler) -> str:
+            return handler.project.name
+        assert injector.call_with_injection(f) == 'proj3'
+
+    with pytest.raises(UnsatisfiedRequirement):
+        injector.get(SomeSingletonService)
+
+    with scope(Project(name='proj4', special=True)):
+        some_singleton_service = injector.get(SomeSingletonService)
+    assert injector.get(SomeSingletonService) == some_singleton_service  # !!!
