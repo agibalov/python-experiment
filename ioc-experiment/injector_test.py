@@ -161,3 +161,29 @@ def test_custom_scope() -> None:
     with scope(Project(name='proj4', special=True)):
         some_singleton_service = injector.get(SomeSingletonService)
     assert injector.get(SomeSingletonService) == some_singleton_service  # !!!
+
+
+def test_child_injector():
+    class ParentScopedService: pass
+    class ChildScopedService: pass
+
+    def configure_parent(binder: Binder):
+        binder.bind(ParentScopedService, scope=singleton)
+    def configure_child(binder: Binder):
+        binder.bind(ChildScopedService, scope=singleton)
+
+    parent_injector = Injector(configure_parent, auto_bind=False)
+    child_injector = parent_injector.create_child_injector(configure_child, auto_bind=False)
+
+    assert parent_injector.get(ParentScopedService) == parent_injector.get(ParentScopedService)
+    assert child_injector.get(ParentScopedService) == child_injector.get(ParentScopedService)
+
+    with pytest.raises(UnsatisfiedRequirement):
+        parent_injector.get(ChildScopedService)
+
+    assert child_injector.get(ChildScopedService) == child_injector.get(ChildScopedService)
+
+    # Is this supposed to work or not?
+    # https://injector.readthedocs.io/en/latest/terminology.html#child-injectors
+    with pytest.raises(UnsatisfiedRequirement):
+        parent_injector.get(ChildScopedService)
