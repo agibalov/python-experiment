@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict, field
+from typing import List
 
 
 def test_dataclass():
@@ -25,3 +26,20 @@ def test_dataclass_field():
 
     person = Person(name='Andrey', age=100)
     assert str(person) == "test_dataclass_field.<locals>.Person(name='Andrey')"
+
+
+def test_dataclass_nested():
+    @dataclass
+    class Interest:
+        description: str
+
+    @dataclass
+    class Person:
+        name: str
+        interests: List[Interest]
+
+    person = Person(name='Andrey', interests=[Interest(description='cats')])
+    assert asdict(person) == {
+        'name': 'Andrey',
+        'interests': [{'description': 'cats'}]
+    }
