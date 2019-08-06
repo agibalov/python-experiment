@@ -5,7 +5,7 @@ from pycuda.compiler import SourceModule
 
 
 def test():
-    a = numpy.random.randn(4,4)
+    a = numpy.random.randn(4, 4)
     a = a.astype(numpy.float32)
     a_gpu = cuda.mem_alloc(a.nbytes)
     cuda.memcpy_htod(a_gpu, a)
