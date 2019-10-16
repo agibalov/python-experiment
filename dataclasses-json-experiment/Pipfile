@@ -8,6 +8,7 @@ pytest = "*"
 dataclasses-json = "==0.2.2"
 
 [packages]
+dataclasses-json = "==0.3.4"
 
 [requires]
 python_version = "3.7"
