@@ -30,7 +30,8 @@ author = 'Andrey A.'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinxcontrib.plantuml'
+    'sphinxcontrib.plantuml',
+    'sphinxcontrib.datatemplates'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

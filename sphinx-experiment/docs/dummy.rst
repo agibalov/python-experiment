@@ -11,6 +11,16 @@ Preformatted::
     bbb
       ccc
 
+datatemplate example
+--------------------
+
+.. datatemplate::
+  :source: interests.yaml
+  :template: yml-example.tmpl
+
+.. note::
+  The data comes from ``interests.yaml``.
+
 Some PlantUML mind map diagram
 ------------------------------
 
