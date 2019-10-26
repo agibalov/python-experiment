@@ -6,6 +6,19 @@
 Welcome to The Dummy Project's documentation!
 =============================================
 
+This is the image:
+
+.. image:: awesome.png
+   :width: 50px
+
+This is the figure:
+
+.. figure:: awesome.png
+   :width: 50px
+   :alt: map to buried treasure
+
+   This is the caption of the figure (a simple paragraph).
+
 Google is right here: https://google.com
 
 Google is right `here <https://google.com>`_.
