@@ -35,6 +35,8 @@ Some PlantUML mind map diagram
   --- Windows 10
   @endmindmap
 
+.. _some_plantuml:
+
 Some PlantUML sequence diagram
 ------------------------------
 

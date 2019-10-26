@@ -6,6 +6,8 @@
 Welcome to The Dummy Project's documentation!
 =============================================
 
+Here's a link to dummy page: :ref:`dummy`. Here's a link to some PlantUML demo: :ref:`some_plantuml`.
+
 This is the image:
 
 .. image:: awesome.png
