@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+pytest = "==5.3.1"
+pytest-cov = "==2.8.1"
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+test = "pytest --cov-report term-missing --cov=calculator"
+test-html = "pytest --cov-report=html:coverage_report --cov=calculator"
