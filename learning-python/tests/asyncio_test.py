@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 
 import pytest
 
@@ -57,3 +58,20 @@ async def test_wait_for():
         await asyncio.wait_for(get_message(0.1), timeout=0.01)
 
     assert await asyncio.wait_for(get_message(0.1), timeout=1) == 'hello world'
+
+dummy_var = contextvars.ContextVar('dummy')
+
+
+@pytest.mark.asyncio
+async def test_context_var():
+    async def get_dummy():
+        await asyncio.sleep(0)
+        return dummy_var.get()
+
+    async def test(value: str):
+        await asyncio.sleep(0)
+        dummy_var.set(value)
+        await asyncio.sleep(0)
+        return await get_dummy()
+
+    assert await asyncio.gather(test('hello'), test('world')) == ['hello', 'world']
