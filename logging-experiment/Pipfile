@@ -8,7 +8,7 @@ pytest = "*"
 
 [packages]
 python-json-logger = "*"
-logbook = "==1.4.3"
+logbook = "==1.5.3"
 
 [requires]
 python_version = "3.7"

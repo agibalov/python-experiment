@@ -1,9 +1,10 @@
+import asyncio
 import json
 import logging
 from io import StringIO
 from traceback import print_exception
 
-from logbook import TestHandler, Processor
+from logbook import TestHandler, Processor, Handler
 from logbook.compat import redirected_logging
 
 
@@ -119,3 +120,47 @@ def test_exception_json_formatter():
         assert record['message'] == 'hello world'
         assert '/logbook_test.py' in record['exception']
         assert 'Exception: Something bad!' in record['exception']
+
+
+def test_asyncio():
+    logger = logging.getLogger('Dummy')
+
+    async def util():
+        for i in range(3):
+            logger.info('I am the util function', extra={'iteration': i+1})
+            await asyncio.sleep(0)
+
+    async def task(task_name: str):
+        def inject_extra(record):
+            record.extra['task_name'] = task_name
+            record.extra['task_id'] = id(asyncio.Task.current_task())
+
+        with Handler(bubble=True).contextbound():
+            with Processor(inject_extra).contextbound():
+                logger.info('I am the task')
+                await asyncio.sleep(0)
+                await util()
+                logger.info('I am still the task')
+
+    root_handler = TestHandler()
+    root_handler.formatter = text_formatter
+    with root_handler.applicationbound():
+        with redirected_logging():
+            asyncio.get_event_loop().run_until_complete(asyncio.gather(task('one'), task('two'), task('three')))
+
+    records = root_handler.formatted_records
+    assert 'INFO: Dummy: I am the task <task_name=one' in records[1]
+    assert 'INFO: Dummy: I am the task <task_name=two' in records[2]
+    assert 'INFO: Dummy: I am the task <task_name=three' in records[3]
+    assert 'INFO: Dummy: I am the util function <iteration=1, task_name=one' in records[4]
+    assert 'INFO: Dummy: I am the util function <iteration=1, task_name=two' in records[5]
+    assert 'INFO: Dummy: I am the util function <iteration=1, task_name=three' in records[6]
+    assert 'INFO: Dummy: I am the util function <iteration=2, task_name=one' in records[7]
+    assert 'INFO: Dummy: I am the util function <iteration=2, task_name=two' in records[8]
+    assert 'INFO: Dummy: I am the util function <iteration=2, task_name=three' in records[9]
+    assert 'INFO: Dummy: I am the util function <iteration=3, task_name=one' in records[10]
+    assert 'INFO: Dummy: I am the util function <iteration=3, task_name=two' in records[11]
+    assert 'INFO: Dummy: I am the util function <iteration=3, task_name=three' in records[12]
+    assert 'INFO: Dummy: I am still the task <task_name=one' in records[13]
+    assert 'INFO: Dummy: I am still the task <task_name=two' in records[14]
+    assert 'INFO: Dummy: I am still the task <task_name=three' in records[15]
