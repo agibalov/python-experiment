@@ -71,13 +71,6 @@ def test_python_json_logger_json_output():
 
 
 def test_logger_adapter():
-    class InjectExtraLoggerAdapter(logging.LoggerAdapter):
-        def process(self, msg, kwargs):
-            if 'extra' not in kwargs.keys():
-                kwargs['extra'] = {}
-            kwargs['extra'].update(self.extra)
-            return msg, kwargs
-
     stream = io.StringIO()
     stream_handler = logging.StreamHandler(stream)
     stream_handler.setFormatter(ExtraAppendingFormatter(
@@ -101,6 +94,17 @@ def test_logger_adapter():
     assert 'INFO     MainProcess MainThread dummy        Some message n=111 m=qqq1 <www1=eee1>' in log
     assert 'INFO     MainProcess MainThread dummy        Some message n=111 m=qqq1 <www1=eee1 a=hello>' in log
     assert 'INFO     MainProcess MainThread dummy        Some message n=111 m=qqq1 <www1=eee1 b=world a=hello>' in log
+
+
+def test_pytest_logging():
+    logger = logging.getLogger('dummy')
+    logger.info('Some message n=%d m=%s', 111, 'qqq1', extra={'www1': 'eee1'})
+
+    logger2 = InjectExtraLoggerAdapter(logger, {'a': 'hello'})
+    logger2.info('Some message n=%d m=%s', 111, 'qqq1', extra={'www1': 'eee1'})
+
+    logger3 = InjectExtraLoggerAdapter(logger2, {'b': 'world'})
+    logger3.info('Some message n=%d m=%s', 111, 'qqq1', extra={'www1': 'eee1'})
 
 
 STANDARD_LOG_RECORD_ATTRIBUTES = set([
@@ -145,3 +149,11 @@ class ExtraAppendingFormatter(logging.Formatter):
             if k not in STANDARD_LOG_RECORD_ATTRIBUTES
         ])
         return super().format(record)
+
+
+class InjectExtraLoggerAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        if 'extra' not in kwargs.keys():
+            kwargs['extra'] = {}
+        kwargs['extra'].update(self.extra)
+        return msg, kwargs
