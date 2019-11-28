@@ -2,6 +2,8 @@ import datetime
 import io
 import json
 import logging
+from logging import LogRecord
+
 import pythonjsonlogger.jsonlogger
 
 
@@ -68,13 +70,54 @@ def test_python_json_logger_json_output():
     assert obj['someExtra'] == 'hi there!'
 
 
+def test_logger_adapter():
+    class InjectExtraLoggerAdapter(logging.LoggerAdapter):
+        def process(self, msg, kwargs):
+            if 'extra' not in kwargs.keys():
+                kwargs['extra'] = {}
+            kwargs['extra'].update(self.extra)
+            return msg, kwargs
+
+    stream = io.StringIO()
+    stream_handler = logging.StreamHandler(stream)
+    stream_handler.setFormatter(ExtraAppendingFormatter(
+        '%(asctime)s %(levelname)-8s %(processName)-5s %(threadName)-5s %(name)-12s %(message)s <%(extra_str)s>'
+    ))
+
+    root_logger = logging.RootLogger(logging.DEBUG)
+    root_logger.addHandler(stream_handler)
+    manager = logging.Manager(root_logger)
+
+    logger = manager.getLogger('dummy')
+    logger.info('Some message n=%d m=%s', 111, 'qqq1', extra={'www1': 'eee1'})
+
+    logger2 = InjectExtraLoggerAdapter(logger, {'a': 'hello'})
+    logger2.info('Some message n=%d m=%s', 111, 'qqq1', extra={'www1': 'eee1'})
+
+    logger3 = InjectExtraLoggerAdapter(logger2, {'b': 'world'})
+    logger3.info('Some message n=%d m=%s', 111, 'qqq1', extra={'www1': 'eee1'})
+
+    log = stream.getvalue()
+    assert 'INFO     MainProcess MainThread dummy        Some message n=111 m=qqq1 <www1=eee1>' in log
+    assert 'INFO     MainProcess MainThread dummy        Some message n=111 m=qqq1 <www1=eee1 a=hello>' in log
+    assert 'INFO     MainProcess MainThread dummy        Some message n=111 m=qqq1 <www1=eee1 b=world a=hello>' in log
+
+
+STANDARD_LOG_RECORD_ATTRIBUTES = set([
+    'args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
+    'funcName', 'levelname', 'levelno', 'lineno', 'module',
+    'msecs', 'message', 'msg', 'name', 'pathname', 'process',
+    'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName'
+])
+
+
 class MyJsonFormatter(object):
     def format(self, log_record: logging.LogRecord):
-        extra = {key: value for (key, value) in log_record.__dict__.items() if key not in [
-            'args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
-            'funcName', 'levelname', 'levelno', 'lineno', 'module',
-            'msecs', 'message', 'msg', 'name', 'pathname', 'process',
-            'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName']}
+        extra = {
+            key: value
+            for (key, value) in log_record.__dict__.items()
+            if key not in STANDARD_LOG_RECORD_ATTRIBUTES
+        }
 
         return json.dumps({
             **{
@@ -92,3 +135,13 @@ class MyPythonJsonLoggerFormatter(pythonjsonlogger.jsonlogger.JsonFormatter):
         super(MyPythonJsonLoggerFormatter, self).add_fields(log_record, record, message_dict)
         log_record['timestamp'] = datetime.datetime.fromtimestamp(record.created).astimezone().isoformat()
         log_record['level'] = record.levelname
+
+
+class ExtraAppendingFormatter(logging.Formatter):
+    def format(self, record: LogRecord) -> str:
+        record.extra_str = ' '.join([
+            f'{k}={v}'
+            for k, v in record.__dict__.items()
+            if k not in STANDARD_LOG_RECORD_ATTRIBUTES
+        ])
+        return super().format(record)
