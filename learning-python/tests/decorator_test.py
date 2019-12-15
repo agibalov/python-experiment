@@ -1,25 +1,33 @@
-from unittest.mock import Mock, call
+import functools
+import time
 
 
 def test_decorate_function():
-    mock = Mock()
+    log = []
 
-    def decorate(func):
+    def trace(func):
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            mock.before(*args, **kwargs)
-            result = func(*args, **kwargs)
-            mock.after(*args, **kwargs)
-            return result
+            log.append('before')
+            start_time = time.perf_counter()
+            result = None
+            try:
+                result = func(*args, **kwargs)
+                return result
+            finally:
+                elapsed_time = time.perf_counter() - start_time
+                print(f'{func.__module__}::{func.__name__} time={elapsed_time:.3f} args={args} kwargs={kwargs} result={result}')
+                log.append('after')
         return wrapper
 
-    @decorate
-    def my_func(s):
-        mock.hello(s)
+    @trace
+    def add_numbers(a, b):
+        log.append('add_numbers')
+        time.sleep(0.1)
+        return a + b
 
-    my_func('hi')
+    assert add_numbers.__name__ == 'add_numbers'
 
-    assert mock.method_calls == [
-        call.before('hi'),
-        call.hello('hi'),
-        call.after('hi')
-    ]
+    add_numbers(2, 3)
+
+    assert log == ['before', 'add_numbers', 'after']
