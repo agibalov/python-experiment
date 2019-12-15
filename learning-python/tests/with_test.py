@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from unittest.mock import Mock, call
 
 
@@ -21,5 +22,24 @@ def test_with():
     assert mock.method_calls == [
         call.enter(),
         call.do_something(),
+        call.exit()
+    ]
+
+
+def test_with_contextmanager():
+    mock = Mock()
+
+    @contextmanager
+    def something():
+        mock.enter()
+        yield mock
+        mock.exit()
+
+    with something() as x:
+        x.work()
+
+    assert mock.method_calls == [
+        call.enter(),
+        call.work(),
         call.exit()
     ]
