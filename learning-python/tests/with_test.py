@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 from unittest.mock import Mock, call
 
+import pytest
+
 
 def test_with():
     mock = Mock()
@@ -32,12 +34,25 @@ def test_with_contextmanager():
     @contextmanager
     def something():
         mock.enter()
-        yield mock
-        mock.exit()
+        try:
+            yield mock
+        finally:
+            mock.exit()
 
     with something() as x:
         x.work()
+    assert mock.method_calls == [
+        call.enter(),
+        call.work(),
+        call.exit()
+    ]
 
+    mock.reset_mock()
+
+    with pytest.raises(Exception):
+        with something() as x:
+            x.work()
+            raise Exception('omg')
     assert mock.method_calls == [
         call.enter(),
         call.work(),
