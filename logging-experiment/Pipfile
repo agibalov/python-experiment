@@ -9,6 +9,9 @@ pytest = "*"
 [packages]
 python-json-logger = "*"
 logbook = "==1.5.3"
+eliot = "===1.11.0"
+eliot-tree = "===18.1.1"
+requests = "===2.22.0"
 
 [requires]
 python_version = "3.7.1"
